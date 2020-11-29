@@ -1,0 +1,47 @@
+create or replace PROCEDURE SP_TEST_BB
+AS
+ 
+TYPE two_cols_rt IS RECORD
+(
+      EMPNO         EMP.EMPNO%TYPE,
+      DNAME         DEPT.DNAME%TYPE
+       
+);
+TYPE upd_info_t IS TABLE OF two_cols_rt;
+lv_upd_rec   upd_info_t;
+ 
+BEGIN
+ 
+DBMS_OUTPUT.put_line('--1- Performing Bulk Collect');
+SELECT E.EMPNO,D.DNAME BULK COLLECT INTO lv_upd_rec
+FROM
+EMP E,
+DEPT D
+WHERE E.DEPTNO = D.DEPTNO 
+AND D.DEPTNO=10;
+ 
+DBMS_OUTPUT.put_line('--2- Printing Fetched data in Bulk Collect');
+for i in lv_upd_rec.first .. lv_upd_rec.last loop
+    dbms_output.put_line(lv_upd_rec(i).EMPNO || '/' || lv_upd_rec(i).DNAME);
+  end loop;
+ 
+DBMS_OUTPUT.put_line('--3- Performing Bulk Bind');
+ 
+FORALL I IN 1 ..lv_upd_rec.count
+UPDATE DEPT D SET D.DNAME ='I.Techno' where D.DNAME = lv_upd_rec(I).DNAME;
+ 
+ 
+DBMS_OUTPUT.put_line('--4- Performing Bulk Collect again to check changes');
+SELECT E.EMPNO,D.DNAME BULK COLLECT INTO lv_upd_rec
+FROM
+EMP E,
+DEPT D
+WHERE E.DEPTNO = D.DEPTNO 
+AND D.DEPTNO=10;
+ 
+DBMS_OUTPUT.put_line('--5- Printing Fetched new data in Bulk Collect');
+for i in lv_upd_rec.first .. lv_upd_rec.last loop
+    dbms_output.put_line(lv_upd_rec(i).EMPNO || '--' || lv_upd_rec(i).DNAME);
+  end loop;
+ 
+END SP_TEST_BB;
